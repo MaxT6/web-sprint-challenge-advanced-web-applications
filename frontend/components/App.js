@@ -6,6 +6,7 @@ import Message from './Message'
 import ArticleForm from './ArticleForm'
 import Spinner from './Spinner'
 import {axiosWithAuth} from '../axios/index'
+import { AuthRoute } from './AuthRoute'
 
 const articlesUrl = 'http://localhost:9000/api/articles'
 const loginUrl = 'http://localhost:9000/api/login'
@@ -17,34 +18,45 @@ export default function App() {
   const [currentArticleId, setCurrentArticleId] = useState()
   const [spinnerOn, setSpinnerOn] = useState(false)
 
+  // console.log("currentArticleId", currentArticleId)
 
   // ✨ Research `useNavigate` in React Router v.6
   const navigate = useNavigate()
-  const redirectToLogin = () => { /* ✨ implement */ }
+  const redirectToLogin = () => {
+    axiosWithAuth().post("/login")
+    .then(res => {
+      // console.log(res)
+      navigate("/")
+    })
+    navigate('/') /* ✨ implement */ }
   const redirectToArticles = () => { /* ✨ implement */ }
 
   const logout = () => {
+    localStorage.removeItem("token")
+    localStorage.getItem("token")
+    setMessage("Goodbye!")
+    navigate("/")
     // ✨ implement
     // If a token is in local storage it should be removed,
     // and a message saying "Goodbye!" should be set in its proper state.
     // In any case, we should redirect the browser back to the login screen,
     // using the helper above.
   }
-  console.log("Spinner should be OFF 1", spinnerOn)
+  // console.log("Spinner should be OFF 1", spinnerOn)
 
   const login = (values) => {
-    console.log("values", values)
+    // console.log("values", values)
     setMessage("")
     setSpinnerOn(true)
-    console.log("Spinner should be ON", spinnerOn)
+    // console.log("Spinner should be ON", spinnerOn)
     axiosWithAuth().post("/login", values)
     .then(res => {
-      console.log("res",res)
+      // console.log("res",res)
       localStorage.setItem("token", res.data.token)
       setMessage(res.data.message)
       navigate("/articles")
       setSpinnerOn(false)
-      console.log("Spinner should be OFF 2", spinnerOn)
+      // console.log("Spinner should be OFF 2", spinnerOn)
     } )
 
 
@@ -62,9 +74,9 @@ export default function App() {
     setSpinnerOn(true)
     axiosWithAuth().get("/articles")
     .then(res => {
-      console.log("res",res)
+      // console.log("res",res)
        setArticles(res.data.articles)
-       console.log("articles", articles)
+      //  console.log("articles", articles)
        setMessage(res.data.message)
        setSpinnerOn(false)
       })
@@ -82,18 +94,36 @@ export default function App() {
   }
 
   const postArticle = article => {
+    // console.log("RES ARTICLE",article)
+    setSpinnerOn(true)
+    axiosWithAuth().post("/articles", article)
+    .then(res => {
+      setArticles([...articles, res.data.article])
+      setMessage(res.data.message)
+      setSpinnerOn(false)
+    })
     // ✨ implement
     // The flow is very similar to the `getArticles` function.
     // You'll know what to do! Use log statements or breakpoints
     // to inspect the response from the server.
   }
 
-  const updateArticle = ({article_id, article }) => {
+  const updateArticle = (article_id, article) => {
     console.log("ARTICLE ID", article_id, "ARTICLE", article)
+    setSpinnerOn(true)
     axiosWithAuth()
       .put(`/articles/${article_id}`, article)
       .then(res => {
-        console.log(res)
+        // console.log("RESDATA", res)
+       setArticles(articles.map(art => {
+         if(art.article_id === res.data.article.article_id) {
+           return res.data.article
+         } else {
+           return art
+         }
+       }))
+       setMessage(res.data.message)
+       setSpinnerOn(false)
       })
 
     // ✨ implement
@@ -102,6 +132,14 @@ export default function App() {
 
   const deleteArticle = article_id => {
     // ✨ implement
+    setSpinnerOn(true)
+    axiosWithAuth().delete(`/articles/${article_id}`)
+    .then(res => {
+      // console.log("DELETE", res)
+      setArticles(articles.filter(art => art.article_id !== article_id ))
+      setMessage(res.data.message)
+      setSpinnerOn(false)
+    })
   }
 
   return (
@@ -119,10 +157,21 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LoginForm login={login}/>} />
           <Route path="/articles" element={
-            <>
-              <ArticleForm />
-              <Articles articles={articles} getArticles={getArticles} updateArticle={updateArticle} setCurrentArticleId={setCurrentArticleId} currentArticleId={currentArticleId}/>
-            </>
+            <AuthRoute>
+              <ArticleForm 
+                setCurrentArticleId={setCurrentArticleId} 
+                currentArticleId={currentArticleId}
+                postArticle={postArticle}
+                currentArticle={articles.find(article => article.article_id === currentArticleId)}
+                updateArticle={updateArticle}/>
+              <Articles 
+                articles={articles} 
+                getArticles={getArticles} 
+                deleteArticle={deleteArticle} 
+                setCurrentArticleId={setCurrentArticleId} 
+                currentArticleId={currentArticleId} 
+               />
+            </AuthRoute>
           } />
         </Routes>
         <footer>Bloom Institute of Technology 2022</footer>

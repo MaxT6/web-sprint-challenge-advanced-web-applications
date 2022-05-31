@@ -7,7 +7,7 @@ export default function Articles(props) {
 
   // ✨ implement conditional logic: if no token exists
   // we should render a Navigate to login screen (React Router v.6)
- console.log("PROPS", props)
+//  console.log("PROPS", props)
   useEffect(() => {
     props.getArticles()
     // ✨ grab the articles here, on first render only
@@ -22,19 +22,19 @@ export default function Articles(props) {
         !props.articles.length
           ? 'No articles yet'
           : props.articles.map(art => {
-            console.log("ART", art)
+            // console.log("ART", art)
             return (
               <div className="article" key={art.article_id}>
-                { console.log("ART2", art)}
+                {/* { console.log("ART2", art)} */}
                 <div>
                   <h3>{art.title}</h3>
                   <p>{art.text}</p>
                   <p>Topic: {art.topic}</p>
                 </div>
                 <div>
-                { console.log("ART3", art)}
-                  <button  disabled={false} onClick={Function.prototype}>Edit</button>
-                  <button disabled={false} onClick={Function.prototype}>Delete</button>
+                {/* { console.log("ART3", art)} */}
+                  <button  disabled={false} onClick={() => props.setCurrentArticleId(art.article_id)}>Edit</button>
+                  <button disabled={false} onClick={() => props.deleteArticle(art.article_id)}>Delete</button>
                 </div>
               </div>
             )
